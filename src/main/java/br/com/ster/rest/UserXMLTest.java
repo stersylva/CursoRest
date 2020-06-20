@@ -11,23 +11,52 @@ import static org.hamcrest.Matchers.is;
 import java.util.ArrayList;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
+import io.restassured.filter.log.LogDetail;
 import io.restassured.internal.path.xml.NodeImpl;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import io.restassured.specification.ResponseSpecification;
 
 
 
 
 public class UserXMLTest {
+	//aulua 24
+	public static RequestSpecification reqSpec;
+	public static ResponseSpecification resSpec;
+	@BeforeClass
+	public static void setup() {
+//		RestAssured.baseURI = "http://restapi.wcaquino.me"; // se fosse htts seria porta 443
+//		RestAssured.port = 80;
+//		RestAssured.basePath = "/v2";
+		
+		RestAssured.baseURI = "http://restapi.wcaquino.me";
+		
+		RequestSpecBuilder reqBuilder = new RequestSpecBuilder();
+		reqBuilder.log(LogDetail.ALL);
+		reqSpec = reqBuilder.build();
+		
+		ResponseSpecBuilder resBiulder = new ResponseSpecBuilder();
+		resBiulder.expectStatusCode(200);
+		resSpec = resBiulder.build();
+		
+		RestAssured.requestSpecification = reqSpec;
+		RestAssured.responseSpecification = resSpec;
+		
+	}
 	
 	@Test
 	//aula 18 e 19
 	public void devoTrabalharComXML() {
 		given()
 		.when()
-			.get("http://restapi.wcaquino.me/usersXML/3")
-		.then()
-			.statusCode(200)
+		.then()			
 			.rootPath("user")
 			.body("name", is("Ana Julia"))
 			.body("@id", is("3"))
@@ -51,9 +80,8 @@ public class UserXMLTest {
 	public void devoFazerPesquisasAvancadasComXML() {
 		given()
 		.when()
-			.get("http://restapi.wcaquino.me/usersXML")
+			.get("/usersXML")
 		.then()
-			.statusCode(200)
 			.body("users.user.size()", is(3))
 			.body("users.user.findAll{it.age.toInteger() <= 25}.size()", is(2))
 			.body("users.user.@id", hasItems("1", "2", "3"))
@@ -69,11 +97,11 @@ public class UserXMLTest {
 	//AULA21
 	@Test
 	public void devoFazerPesquisasAvancadasComXMLEJava() {
-		ArrayList<NodeImpl> nomes = given()
+		ArrayList<NodeImpl> nomes = 
+		given()
 		.when()
-			.get("http://restapi.wcaquino.me/usersXML")
+			.get("/usersXML")
 		.then()
-			.statusCode(200)
 			.extract().path("users.user.name.findAll{it.toString().contains('n')}")
 		;
 		System.out.println(nomes.toString());
@@ -88,9 +116,8 @@ public class UserXMLTest {
 	public void devoFazerPesquisaComXpath() {
 		given()
 		.when()
-			.get("http://restapi.wcaquino.me/usersXML")
+			.get("/usersXML")
 		.then()
-			.statusCode(200)
 			.body(hasXPath("count(/users/user)", is("3")))
 			.body(hasXPath("/users/user[@id = '1']"))
 			.body(hasXPath("//user[@id = '2']"))
